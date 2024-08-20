@@ -6,7 +6,7 @@ import {
 import { CalendarList } from 'react-native-calendars';
 import dayjs from 'dayjs';
 import Icon from 'react-native-vector-icons/Ionicons';
-import customFetch from './utils/CustomFetch'; // Ensure to replace with your actual fetch utility
+import customFetch from './utils/CustomFetch';
 
 export default function MyCalendar() {
     const [selectedDate, setSelectedDate] = useState(null);

@@ -7,106 +7,144 @@ import {
     Platform,
     Alert
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import customFetch from "./utils/CustomFetch";
 import { useNavigation } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
+import Icon from 'react-native-vector-icons/Ionicons';
+import customFetch from './utils/CustomFetch';
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
     const navigation = useNavigation();
 
-    const handlePasswordReset = async () => {
+    const handlePasswordReset = async (e) => {
+        e.preventDefault();
+        const userData = {
+            email: email,
+        };
+        console.log(userData)
         try {
-            const response = await customFetch.post('/forgot-password', { email });
-            Alert.alert('Success', 'Password reset link has been sent to your email.');
-            navigation.navigate('Login');
+            const response = await customFetch.post('/forgot-password', userData);
+            if (response.status >= 200 && response.status <= 299) {
+              
+                setEmail('')
+            }
         } catch (error) {
-            console.error('Password reset failed:', error);
-            Alert.alert('Failed', error?.response?.data?.error || 'An error occurred. Please try again.');
+            console.log(error);
+
         }
     };
 
     return (
-        <KeyboardAvoidingView style={styles.container} behavior="padding">
-            <SafeAreaView style={styles.container}>
-                <StatusBar barStyle="light-content" backgroundColor="tomato" />
-                <View style={styles.container}>
-                    <View style={styles.headerContainer}>
-                        <Icon name="lock-closed-outline" style={styles.icon} />
-                        <Text style={styles.headerText}>Forgot Password</Text>
-                    </View>
-                    <View style={styles.formContainer}>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter your email"
-                            placeholderTextColor="#999"
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            value={email}
-                            onChangeText={setEmail}
-                        />
-                        <TouchableOpacity style={styles.button} onPress={handlePasswordReset}>
-                            <Text style={styles.buttonText}>Submit</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <Text style={styles.backText}>Back to Login</Text>
+        <SafeAreaView style={styles.container}>
+            <KeyboardAvoidingView
+                style={styles.formContainer}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            >
+                <View style={styles.headerContainer}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <Icon name="arrow-back" style={styles.backIcon} />
                     </TouchableOpacity>
+                    <Icon name="lock-closed-outline" style={styles.headerIcon} />
+                    <Text style={styles.headerText}>Forgot Password</Text>
                 </View>
-            </SafeAreaView>
-        </KeyboardAvoidingView>
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Enter your email"
+                        placeholderTextColor="#999"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        value={email}
+                        onChangeText={setEmail}
+                    />
+                </View>
+                <TouchableOpacity onPress={handlePasswordReset} style={styles.button}>
+                    <Text style={styles.buttonText}>Submit</Text>
+                </TouchableOpacity>
+               
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f8f9fa",
-        justifyContent: "center",
-        alignItems: "center",
+        backgroundColor: "#fff",
         padding: 20,
     },
     headerContainer: {
-        alignItems: "center",
+        flexDirection: 'row',
+        alignItems: 'center',
         marginBottom: 20,
     },
-    icon: {
-        fontSize: 80,
+    backButton: {
+        position: 'absolute',
+        left: 10,
+        top: 10,
+    },
+    backIcon: {
+        fontSize: 24,
         color: "tomato",
+    },
+    headerIcon: {
+        fontSize: 35,
+        color: "tomato",
+        marginLeft: 50,
     },
     headerText: {
-        fontSize: 24,
-        fontWeight: "bold",
+        fontSize: 32,
+        fontWeight: 'bold',
         color: "tomato",
-        marginTop: 10,
+        marginLeft: 10,
     },
     formContainer: {
-        width: "100%",
+        flex: 1,
+        justifyContent: 'center',
     },
-    input: {
-        height: 50,
-        borderColor: "#ddd",
+    inputContainer: {
+        marginBottom: 20,
+    },
+    textInput: {
+        height: 55,
+        borderColor: '#ddd',
         borderWidth: 1,
-        borderRadius: 5,
-        paddingHorizontal: 10,
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        fontSize: 18,
+        color: "#333",
+        backgroundColor: '#fff',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.3,
+        shadowRadius: 2,
+        elevation: 2,
         marginBottom: 15,
-        backgroundColor: "#fff",
     },
     button: {
-        backgroundColor: "tomato",
+        backgroundColor: 'tomato',
         paddingVertical: 15,
-        borderRadius: 5,
-        alignItems: "center",
+        borderRadius: 10,
+        alignItems: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 3,
+        width: '100%',
+        marginBottom: 15,
     },
     buttonText: {
-        color: "#fff",
-        fontSize: 18,
-        fontWeight: "bold",
+        color: '#FFFFFF',
+        fontSize: 20,
+        fontWeight: 'bold',
     },
-    backText: {
-        color: "tomato",
-        fontSize: 16,
+    backToLoginButton: {
+        alignItems: 'center',
         marginTop: 20,
+    },
+    backToLoginText: {
+        color: 'tomato',
+        fontSize: 16,
     },
 });

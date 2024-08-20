@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import {
     SafeAreaView, StyleSheet, View, Text,
-    TextInput,
-    TouchableOpacity,
-    KeyboardAvoidingView,
-    Platform,
-    Alert
+    TextInput, TouchableOpacity, KeyboardAvoidingView,
+    Platform, Alert, Image, Modal
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import customFetch from './utils/CustomFetch';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
+import { Picker } from '@react-native-picker/picker';
 
 export default function OnDuty() {
     const [date, setDate] = useState(new Date());
@@ -21,6 +20,10 @@ export default function OnDuty() {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showStartTimePicker, setShowStartTimePicker] = useState(false);
     const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+    const [onDutyType, setOnDutyType] = useState('');
+    const [location, setLocation] = useState(null);
+    const [imageUri, setImageUri] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
     const navigation = useNavigation();
 
     const handleDateChange = (event, selectedDate) => {
@@ -50,7 +53,10 @@ export default function OnDuty() {
                 date: formattedDate,
                 startTime: formattedStartTime,
                 endTime: formattedEndTime,
-                reason
+                reason,
+                onDutyType,
+                location,
+                imageUri
             });
             Alert.alert('Success', 'On-duty request submitted successfully.');
             navigation.goBack();
@@ -58,6 +64,46 @@ export default function OnDuty() {
             console.error('On-duty request failed:', error);
             Alert.alert('Failed', error?.response?.data?.error || 'An error occurred. Please try again.');
         }
+    };
+
+    const requestPermissions = async () => {
+        const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
+        const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (cameraStatus !== 'granted' || libraryStatus !== 'granted') {
+            Alert.alert('Permission required', 'Camera and gallery permissions are required.');
+        }
+    };
+
+    const handleImageSelection = async () => {
+        await requestPermissions();
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: false, // Ensure cropping is disabled
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImageUri(result.uri);
+            setModalVisible(false);
+        }
+    };
+
+    const handleImageCapture = async () => {
+        await requestPermissions();
+        const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: false, // Ensure cropping is disabled
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImageUri(result.uri);
+            setModalVisible(false);
+        }
+    };
+
+    const handleImageChoice = () => {
+        setModalVisible(true);
     };
 
     return (
@@ -75,6 +121,18 @@ export default function OnDuty() {
                     <Text style={styles.headerText}>On Duty</Text>
                 </View>
                 <View style={styles.inputContainer}>
+                    <Text style={styles.label}>On Duty Type:</Text>
+                    <Picker
+                        selectedValue={onDutyType}
+                        style={styles.picker}
+                        onValueChange={(itemValue) => setOnDutyType(itemValue)}
+                    >
+                        <Picker.Item label="Select Type" value="" />
+                        <Picker.Item label="WFH" value="WFH" />
+                        <Picker.Item label="Business Trip" value="Business Trip" />
+                        {/* Add other types as needed */}
+                    </Picker>
+
                     <Text style={styles.label}>Date:</Text>
                     <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateInput}>
                         <Text style={styles.dateText}>{dayjs(date).format('YYYY-MM-DD')}</Text>
@@ -124,10 +182,47 @@ export default function OnDuty() {
                         placeholder="Enter reason for on-duty"
                         placeholderTextColor="#999"
                     />
+
+                    <TouchableOpacity onPress={handleImageChoice} style={styles.button}>
+                        <Text style={styles.buttonText}>Upload Image</Text>
+                    </TouchableOpacity>
+
+                    {imageUri && (
+                        <View style={styles.imageContainer}>
+                            <Image source={{ uri: imageUri }} style={styles.image} />
+                            <Text style={styles.imageName}>{imageUri.split('/').pop()}</Text>
+                        </View>
+                    )}
+
                 </View>
                 <TouchableOpacity onPress={handleOnDutySubmit} style={styles.button}>
                     <Text style={styles.buttonText}>Submit</Text>
                 </TouchableOpacity>
+
+                <Modal
+                    transparent={true}
+                    visible={modalVisible}
+                    animationType="slide"
+                    onRequestClose={() => setModalVisible(false)} // Ensure modal can be closed with hardware back button
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <TouchableOpacity onPress={handleImageCapture} style={styles.modalButton}>
+                                <Icon name="camera" style={styles.modalIcon} />
+                                <Text style={styles.modalButtonText}>Take Photo</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={handleImageSelection} style={styles.modalButton}>
+                                <Icon name="image" style={styles.modalIcon} />
+                                <Text style={styles.modalButtonText}>Choose from Gallery</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalButton}>
+                                <Icon name="close" style={styles.modalIcon} />
+                                <Text style={styles.modalButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
@@ -136,7 +231,10 @@ export default function OnDuty() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: '#fff',
+    },
+    formContainer: {
+        flex: 1,
         padding: 20,
     },
     headerContainer: {
@@ -149,89 +247,107 @@ const styles = StyleSheet.create({
     },
     backIcon: {
         fontSize: 24,
-        color: "tomato",
+        color: 'tomato',
     },
     headerIcon: {
-        fontSize: 35,
-        color: "tomato",
-        marginRight: 10,
+        fontSize: 24,
+        color: 'tomato',
     },
     headerText: {
-        fontSize: 32,
+        fontSize: 20,
         fontWeight: 'bold',
-        color: "tomato",
-    },
-    formContainer: {
-        flex: 1,
-        justifyContent: 'center',
+        color: 'tomato',
     },
     inputContainer: {
-        marginBottom: 20,
+        flex: 1,
+        justifyContent: 'center',
+       
     },
     label: {
         fontSize: 16,
-        color: '#333',
+        fontWeight: 'bold',
         marginBottom: 5,
     },
-    dateInput: {
-        height: 55,
-        borderColor: '#ddd',
+    picker: {
+        height: 50,
+        width: '100%',
+        marginBottom: 15,
+        borderColor: '#ccc',
         borderWidth: 1,
         borderRadius: 10,
-        paddingHorizontal: 15,
-        fontSize: 18,
-        color: "#333",
-        backgroundColor: '#fff',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.3,
-        shadowRadius: 2,
-        elevation: 2,
-        justifyContent: 'center',
+    },
+    dateInput: {
+        backgroundColor: '#f0f0f0',
+        padding: 10,
+        borderRadius: 5,
         marginBottom: 15,
     },
     dateText: {
-        color: "#333",
-        fontSize: 18,
+        fontSize: 16,
+    },
+    pickerWrapper: {
+        marginTop: -15,
+        marginBottom: 15,
     },
     textInput: {
-        height: 55,
-        borderColor: '#ddd',
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        fontSize: 18,
-        color: "#333",
-        backgroundColor: '#fff',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.3,
-        shadowRadius: 2,
-        elevation: 2,
+        backgroundColor: '#f0f0f0',
+        padding: 10,
+        borderRadius: 5,
         marginBottom: 15,
+        height: 100,
+        textAlignVertical: 'top',
     },
     button: {
         backgroundColor: 'tomato',
-        paddingVertical: 15,
-        borderRadius: 10,
+        padding: 15,
+        borderRadius: 5,
         alignItems: 'center',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-        elevation: 3,
-        width: '100%',
+        marginVertical: 10,
     },
     buttonText: {
-        color: '#FFFFFF',
-        fontSize: 20,
+        color: '#fff',
+        fontSize: 16,
         fontWeight: 'bold',
     },
-    pickerWrapper: {
-        borderColor: 'tomato',
-        borderWidth: 1,
+    imageContainer: {
+        alignItems: 'center',
+        marginVertical: 15,
+    },
+    image: {
+        width: 200,
+        height: 200,
         borderRadius: 10,
-        overflow: 'hidden',
-        marginBottom: 15,
+    },
+    imageName: {
+        marginTop: 5,
+        color: '#333',
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 20,
+        width: '80%',
+        alignItems: 'center',
+    },
+    modalButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
+        width: '100%',
+    },
+    modalIcon: {
+        fontSize: 24,
+        marginRight: 10,
+    },
+    modalButtonText: {
+        fontSize: 16,
     },
 });

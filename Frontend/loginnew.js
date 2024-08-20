@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppContext } from '../ContextAPI/AppContext';
 import { DataContext } from '../ContextAPI/DataContext';
 import Colour from '../Constants/Colour'
- 
+
 export default function LoginNew() {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const { handleLogin } = useContext(DataContext);
@@ -37,6 +37,7 @@ export default function LoginNew() {
             Alert.alert('Login Failed', error?.response?.data?.error || 'An error occurred. Please try again.');
         }
     };
+
 
     const moveAnimation = useRef(new Animated.Value(0)).current;
     const [doorLocked, setDoorLocked] = useState(true);
@@ -68,7 +69,7 @@ export default function LoginNew() {
         >
             <SafeAreaView style={styles.container}>
                 <ImageBackground
-                    source={require("./Images/backgroundGradient.png")}
+                    // source={require("./Images/backgroundGradient.png")}
                     style={styles.backgroundImage}
                 >
                     <View style={styles.container}>
@@ -117,7 +118,9 @@ export default function LoginNew() {
                             <Text onPress={() => navigation.navigate('Signin')} style={styles.text}>Forget password?</Text>
                         </View>
                         <View style={styles.container5}>
-                            <TouchableOpacity onPress={handleSubmit} style={styles.button}>
+
+                            {/* <TouchableOpacity onPress={navigation.navigate('Home')} style={styles.button}> */}
+                                <TouchableOpacity onPress={handleSubmit} style={styles.button}>
                                 <Text style={styles.buttonText}>Login</Text>
                             </TouchableOpacity>
                         </View>
@@ -135,7 +138,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFFFFF',
-       // backgroundColor: '#f5f5f5',
+        // backgroundColor: '#f5f5f5',
     },
     backgroundImage: {
         flex: 1,
@@ -210,7 +213,7 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 14,
         paddingVertical: "4%",
-        color:Colour.primary,
+        color: Colour.primary,
     },
     textInput: {
         color: "#333",
@@ -225,7 +228,7 @@ const styles = StyleSheet.create({
     },
     button: {
         width: '100%',
-        backgroundColor:Colour.primary,
+        backgroundColor: Colour.primary,
         paddingVertical: 15,
         borderRadius: 10,
         marginTop: "1%",
