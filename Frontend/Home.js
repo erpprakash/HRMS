@@ -40,7 +40,7 @@ export default function Home({ Token }) {
         }, 60000);
 
         return () => clearInterval(intervalId);
-        
+
     }, []);
     const handlePress = (iconName) => {
         handleIconPress(iconName);
@@ -71,7 +71,7 @@ export default function Home({ Token }) {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
             console.error('Permission to access location was denied');
-            return ;
+            return;
         }
 
         const { coords } = await Location.getCurrentPositionAsync({});
@@ -87,26 +87,25 @@ export default function Home({ Token }) {
         const fetchWeatherData = async () => {
             await fetchWeatherByLocation();
         };
-    
+
         fetchWeatherData();
     }, []);
-    
+
     const fetchWeather = async (city) => {
         try {
-           
             const apiKey = '873fb894feda482743f544fbe67b93ff';
             const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`);
-            const weather = response.data.weather[0].main.toLowerCase();
+            const weather = response.data.weather[0].description.toLowerCase();
             setWeatherCondition(weather);
             setAnimationSource(getAnimationSource(weather));
 
         } catch (error) {
             console.error('Weather fetch failed:', error);
-           
+
         }
     };
     const getAnimationSource = (weather) => {
-              console.log(weather)
+        console.log(weather)
         switch (weather) {
             case 'thunderstorm':
                 return require('./Images/Night.json');
@@ -120,7 +119,7 @@ export default function Home({ Token }) {
                 return require('./Images/Morning.json');
         }
     };
-    
+
 
 
 

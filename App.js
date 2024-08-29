@@ -12,6 +12,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { DataProvider } from './ContextAPI/DataContext';
 import { AppProvider } from './ContextAPI/AppContext';
+import Colour from './Constants/Colour';
 
 export default function App() {
   const Stack = createNativeStackNavigator();
@@ -20,7 +21,7 @@ export default function App() {
     <View style={{ flex: 1 }}>
       <StatusBar
         barStyle="dark-content"
-        backgroundColor="tomato"
+        backgroundColor={Colour.primary}
         translucent={false}
       />
       <NavigationContainer>

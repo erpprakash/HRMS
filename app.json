@@ -13,14 +13,23 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.chitraprakash.HRM"
+      "bundleIdentifier": "com.chitraprakash.HRM",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to capture selfies.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to provide location-based features."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.chitraprakash.HRM"
+      "package": "com.chitraprakash.HRM",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

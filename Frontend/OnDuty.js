@@ -1,118 +1,188 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    SafeAreaView, StyleSheet, View, Text,
-    TextInput, TouchableOpacity, KeyboardAvoidingView,
-    Platform, Alert, Image, Modal
+    SafeAreaView, StyleSheet, View, Text, TextInput,
+    TouchableOpacity, Alert, Image, Modal
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import customFetch from './utils/CustomFetch';
 import Icon from 'react-native-vector-icons/Ionicons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Colour from '../Constants/Colour'
 export default function OnDuty() {
     const [date, setDate] = useState(new Date());
-    const [startTime, setStartTime] = useState(new Date());
-    const [endTime, setEndTime] = useState(new Date());
     const [reason, setReason] = useState('');
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-    const [showEndTimePicker, setShowEndTimePicker] = useState(false);
     const [onDutyType, setOnDutyType] = useState('');
     const [location, setLocation] = useState(null);
     const [imageUri, setImageUri] = useState(null);
-    const [modalVisible, setModalVisible] = useState(false);
+    const [City, setCity] = useState('');
+    const [checkedIn, setCheckedIn] = useState(false);
+    const [timer, setTimer] = useState(0);
+    const [isModalVisible, setIsModalVisible] = useState(false);
     const navigation = useNavigation();
 
-    const handleDateChange = (event, selectedDate) => {
-        const currentDate = selectedDate || date;
-        setShowDatePicker(Platform.OS === 'ios');
-        setDate(currentDate);
+    useEffect(() => {
+        retrieveStoredData();
+    }, []);
+
+    useEffect(() => {
+        let interval;
+        if (checkedIn) {
+            interval = setInterval(() => {
+                setTimer(prevTimer => prevTimer + 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [checkedIn]);
+
+    useEffect(() => {
+        if (timer >= 86400) { // 24 hours in seconds
+            handleAutoCheckOut();
+        }
+    }, [timer]);
+
+    const retrieveStoredData = async () => {
+        try {
+            const storedCheckInTime = await AsyncStorage.getItem('checkInTime');
+            const storedCheckedIn = await AsyncStorage.getItem('checkedIn');
+            if (storedCheckedIn === 'true' && storedCheckInTime) {
+                const elapsedSeconds = Math.floor((Date.now() - parseInt(storedCheckInTime, 10)) / 1000);
+                setTimer(elapsedSeconds);
+                setCheckedIn(true);
+                setIsModalVisible(true);
+            }
+        } catch (error) {
+            console.error('Failed to retrieve data:', error);
+        }
     };
 
-    const handleStartTimeChange = (event, selectedTime) => {
-        const currentTime = selectedTime || startTime;
-        setShowStartTimePicker(Platform.OS === 'ios');
-        setStartTime(currentTime);
+    const storeCheckInData = async () => {
+        try {
+            await AsyncStorage.setItem('checkInTime', Date.now().toString());
+            await AsyncStorage.setItem('checkedIn', 'true');
+        } catch (error) {
+            console.error('Failed to store data:', error);
+        }
     };
 
-    const handleEndTimeChange = (event, selectedTime) => {
-        const currentTime = selectedTime || endTime;
-        setShowEndTimePicker(Platform.OS === 'ios');
-        setEndTime(currentTime);
+    const clearStoredData = async () => {
+        try {
+            await AsyncStorage.removeItem('checkInTime');
+            await AsyncStorage.removeItem('checkedIn');
+        } catch (error) {
+            console.error('Failed to clear data:', error);
+        }
     };
 
     const handleOnDutySubmit = async () => {
         try {
             const formattedDate = dayjs(date).format('YYYY-MM-DD');
-            const formattedStartTime = dayjs(startTime).format('HH:mm');
-            const formattedEndTime = dayjs(endTime).format('HH:mm');
-            const response = await customFetch.post('/on-duty', {
-                date: formattedDate,
-                startTime: formattedStartTime,
-                endTime: formattedEndTime,
-                reason,
-                onDutyType,
-                location,
-                imageUri
-            });
+            // const response = await customFetch.post('/on-duty', {
+            //     date: formattedDate,
+            //     reason,
+            //     onDutyType,
+            //     location,
+            //     imageUri
+            // });
             Alert.alert('Success', 'On-duty request submitted successfully.');
-            navigation.goBack();
+            setCheckedIn(true);
+            storeCheckInData();
+            setIsModalVisible(true);
         } catch (error) {
             console.error('On-duty request failed:', error);
             Alert.alert('Failed', error?.response?.data?.error || 'An error occurred. Please try again.');
         }
     };
 
-    const requestPermissions = async () => {
-        const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-        const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (cameraStatus !== 'granted' || libraryStatus !== 'granted') {
-            Alert.alert('Permission required', 'Camera and gallery permissions are required.');
+    const handleAutoCheckOut = async () => {
+        try {
+            await customFetch.post('/check-out', { /* check-out data */ });
+            console.log('Checked out automatically');
+            setCheckedIn(false);
+            setIsModalVisible(false);
+            resetState();
+            clearStoredData();
+        } catch (error) {
+            console.error('Automatic check-out failed:', error);
         }
     };
 
-    const handleImageSelection = async () => {
-        await requestPermissions();
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: false, // Ensure cropping is disabled
-            quality: 1,
-        });
-
-        if (!result.canceled) {
-            setImageUri(result.uri);
-            setModalVisible(false);
+    const handleCheckOut = async () => {
+        try {
+            await customFetch.post('/check-out', { /* check-out data */ });
+            Alert.alert('Success', 'Checked out successfully.');
+            setCheckedIn(false);
+            setIsModalVisible(false);
+            resetState();
+            clearStoredData();
+        } catch (error) {
+            console.error('Check-out failed:', error);
+            Alert.alert('Failed', 'Check-out failed. Please try again.');
         }
     };
 
-    const handleImageCapture = async () => {
-        await requestPermissions();
+    const handleSelfieCapture = async () => {
+        const permissionsGranted = await requestPermissions();
+        if (!permissionsGranted) return;
+
+        const locationResult = await Location.getCurrentPositionAsync({});
+        const { coords } = locationResult;
+        const { latitude, longitude } = coords;
+
+        const reverseGeocode = await Location.reverseGeocodeAsync({ latitude, longitude });
+        const city = reverseGeocode[0]?.formattedAddress || 'Default City';
+        setCity(city);
+        setLocation(locationResult);
+
         const result = await ImagePicker.launchCameraAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: false, // Ensure cropping is disabled
+            allowsEditing: false,
             quality: 1,
+            cameraType: ImagePicker.CameraType.front,
         });
 
-        if (!result.canceled) {
-            setImageUri(result.uri);
-            setModalVisible(false);
+        if (!result.canceled && result.assets && result.assets[0]) {
+            setImageUri(result.assets[0].uri);
         }
     };
 
-    const handleImageChoice = () => {
-        setModalVisible(true);
+    const requestPermissions = async () => {
+        try {
+            const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
+            const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
+
+            if (cameraStatus !== 'granted' || locationStatus !== 'granted') {
+                Alert.alert('Permission required', 'Camera and location permissions are required.');
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error('Permissions request error:', error);
+            return false;
+        }
+    };
+
+    const resetState = () => {
+        setTimer(0);
+        setReason('');
+        setOnDutyType('');
+        setLocation(null);
+        setImageUri(null);
+    };
+
+    const formatTimer = (seconds) => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const remainingSeconds = seconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView
-                style={styles.formContainer}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-            >
+            <View style={styles.formContainer}>
                 <View style={styles.headerContainer}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                         <Icon name="arrow-back" style={styles.backIcon} />
@@ -120,6 +190,7 @@ export default function OnDuty() {
                     <Icon name="time-outline" style={styles.headerIcon} />
                     <Text style={styles.headerText}>On Duty</Text>
                 </View>
+
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>On Duty Type:</Text>
                     <Picker
@@ -129,52 +200,12 @@ export default function OnDuty() {
                     >
                         <Picker.Item label="Select Type" value="" />
                         <Picker.Item label="WFH" value="WFH" />
+                        <Picker.Item label="Unit Visit" value="Unit Visit" />
+                        <Picker.Item label="Market Place" value="Market Place" />
+                        <Picker.Item label="Supplier Factory Visit" value="Supplier Factory Visit" />
                         <Picker.Item label="Business Trip" value="Business Trip" />
-                        {/* Add other types as needed */}
                     </Picker>
 
-                    <Text style={styles.label}>Date:</Text>
-                    <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateInput}>
-                        <Text style={styles.dateText}>{dayjs(date).format('YYYY-MM-DD')}</Text>
-                    </TouchableOpacity>
-                    {showDatePicker && (
-                        <View style={styles.pickerWrapper}>
-                            <DateTimePicker
-                                value={date}
-                                mode="date"
-                                display="default"
-                                onChange={handleDateChange}
-                            />
-                        </View>
-                    )}
-                    <Text style={styles.label}>Start Time:</Text>
-                    <TouchableOpacity onPress={() => setShowStartTimePicker(true)} style={styles.dateInput}>
-                        <Text style={styles.dateText}>{dayjs(startTime).format('HH:mm')}</Text>
-                    </TouchableOpacity>
-                    {showStartTimePicker && (
-                        <View style={styles.pickerWrapper}>
-                            <DateTimePicker
-                                value={startTime}
-                                mode="time"
-                                display="default"
-                                onChange={handleStartTimeChange}
-                            />
-                        </View>
-                    )}
-                    <Text style={styles.label}>End Time:</Text>
-                    <TouchableOpacity onPress={() => setShowEndTimePicker(true)} style={styles.dateInput}>
-                        <Text style={styles.dateText}>{dayjs(endTime).format('HH:mm')}</Text>
-                    </TouchableOpacity>
-                    {showEndTimePicker && (
-                        <View style={styles.pickerWrapper}>
-                            <DateTimePicker
-                                value={endTime}
-                                mode="time"
-                                display="default"
-                                onChange={handleEndTimeChange}
-                            />
-                        </View>
-                    )}
                     <TextInput
                         onChangeText={setReason}
                         style={styles.textInput}
@@ -183,47 +214,43 @@ export default function OnDuty() {
                         placeholderTextColor="#999"
                     />
 
-                    <TouchableOpacity onPress={handleImageChoice} style={styles.button}>
-                        <Text style={styles.buttonText}>Upload Image</Text>
+                    <TouchableOpacity onPress={handleSelfieCapture} style={styles.button}>
+                        <Text style={styles.buttonText}>Take Selfie</Text>
                     </TouchableOpacity>
 
                     {imageUri && (
                         <View style={styles.imageContainer}>
                             <Image source={{ uri: imageUri }} style={styles.image} />
-                            <Text style={styles.imageName}>{imageUri.split('/').pop()}</Text>
+                            <Text style={styles.imageName}>
+                                Location: {location ? `${City}` : 'Fetching location...'}
+
+                                {/* Location: {location ? `${City}, ${location.coords.latitude}, ${location.coords.longitude}` : 'Fetching location...'} */}
+                            </Text>
+                            <TouchableOpacity onPress={() => setImageUri(null)} style={styles.clearButton}>
+                                <Text style={styles.clearButtonText}>Clear</Text>
+                            </TouchableOpacity>
                         </View>
                     )}
-
                 </View>
-                <TouchableOpacity onPress={handleOnDutySubmit} style={styles.button}>
-                    <Text style={styles.buttonText}>Submit</Text>
-                </TouchableOpacity>
 
-                <Modal
-                    transparent={true}
-                    visible={modalVisible}
-                    animationType="slide"
-                    onRequestClose={() => setModalVisible(false)} // Ensure modal can be closed with hardware back button
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <TouchableOpacity onPress={handleImageCapture} style={styles.modalButton}>
-                                <Icon name="camera" style={styles.modalIcon} />
-                                <Text style={styles.modalButtonText}>Take Photo</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={handleImageSelection} style={styles.modalButton}>
-                                <Icon name="image" style={styles.modalIcon} />
-                                <Text style={styles.modalButtonText}>Choose from Gallery</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalButton}>
-                                <Icon name="close" style={styles.modalIcon} />
-                                <Text style={styles.modalButtonText}>Cancel</Text>
+                {!checkedIn ? (
+                    <TouchableOpacity onPress={handleOnDutySubmit} style={styles.button}>
+                        <Text style={styles.buttonText}>Check IN</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <Modal
+                        visible={isModalVisible}
+                        transparent={true}
+                        onRequestClose={() => { }}>
+                        <View style={styles.modalContainer}>
+                            <Text style={styles.timerText}>Time Elapsed: {formatTimer(timer)}</Text>
+                            <TouchableOpacity onPress={handleCheckOut} style={styles.button}>
+                                <Text style={styles.buttonText}>Check OUT</Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
-                </Modal>
-
-            </KeyboardAvoidingView>
+                    </Modal>
+                )}
+            </View>
         </SafeAreaView>
     );
 }
@@ -231,123 +258,108 @@ export default function OnDuty() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#f8f8f8',
+        justifyContent: 'center',
+
     },
     formContainer: {
-        flex: 1,
         padding: 20,
     },
     headerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+
         marginBottom: 20,
     },
     backButton: {
-        marginRight: 10,
+        marginRight: 15,
     },
     backIcon: {
         fontSize: 24,
-        color: 'tomato',
+        color: Colour.primary,
     },
     headerIcon: {
-        fontSize: 24,
-        color: 'tomato',
+        fontSize: 28,
+        color: Colour.primary,
+        marginRight: 10,
     },
     headerText: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
-        color: 'tomato',
+        color: Colour.primary,
     },
     inputContainer: {
-        flex: 1,
-        justifyContent: 'center',
-       
+        marginBottom: 20,
+
     },
     label: {
-        fontSize: 16,
+        fontSize: 18,
+        color: Colour.primary,
         fontWeight: 'bold',
-        marginBottom: 5,
     },
     picker: {
-        height: 50,
-        width: '100%',
-        marginBottom: 15,
-        borderColor: '#ccc',
+        backgroundColor: '#e9ebed',
+
         borderWidth: 1,
-        borderRadius: 10,
-    },
-    dateInput: {
-        backgroundColor: '#f0f0f0',
-        padding: 10,
         borderRadius: 5,
-        marginBottom: 15,
-    },
-    dateText: {
-        fontSize: 16,
-    },
-    pickerWrapper: {
-        marginTop: -15,
-        marginBottom: 15,
+        height: 50,
+        marginBottom: 20,
     },
     textInput: {
-        backgroundColor: '#f0f0f0',
-        padding: 10,
+        height: 50,
+        borderColor: '#ccc',
+        borderWidth: 1,
         borderRadius: 5,
-        marginBottom: 15,
-        height: 100,
-        textAlignVertical: 'top',
+        paddingHorizontal: 10,
+        marginBottom: 20,
+        color: '#333',
     },
     button: {
-        backgroundColor: 'tomato',
-        padding: 15,
+        backgroundColor: Colour.primary,
+        paddingVertical: 15,
         borderRadius: 5,
         alignItems: 'center',
-        marginVertical: 10,
     },
     buttonText: {
         color: '#fff',
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
     },
     imageContainer: {
+        marginTop: 20,
         alignItems: 'center',
-        marginVertical: 15,
     },
     image: {
-        width: 200,
+        width: 140,
         height: 200,
-        borderRadius: 10,
+        borderRadius: 50,
+
     },
     imageName: {
-        marginTop: 5,
-        color: '#333',
+        marginTop: 10,
+        fontSize: 16,
+        color: '#666',
     },
-    modalOverlay: {
+    clearButton: {
+        marginTop: 10,
+        backgroundColor: Colour.primary,
+        paddingVertical: 5,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+    },
+    clearButtonText: {
+        color: '#fff',
+        fontSize: 16,
+    },
+    modalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0,0,0,0.7)',
     },
-    modalContent: {
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 20,
-        width: '80%',
-        alignItems: 'center',
-    },
-    modalButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ddd',
-        width: '100%',
-    },
-    modalIcon: {
+    timerText: {
+        color: '#fff',
         fontSize: 24,
-        marginRight: 10,
-    },
-    modalButtonText: {
-        fontSize: 16,
+        marginBottom: 20,
     },
 });

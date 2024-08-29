@@ -7,6 +7,7 @@ import { CalendarList } from 'react-native-calendars';
 import dayjs from 'dayjs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import customFetch from './utils/CustomFetch';
+import Colour from '../Constants/Colour';
 
 export default function MyCalendar() {
     const [selectedDate, setSelectedDate] = useState(null);
@@ -74,7 +75,7 @@ export default function MyCalendar() {
                     current={dayjs().format('YYYY-MM-DD')}
                     onDayPress={handleDayPress}
                     markedDates={{
-                        [selectedDate]: { selected: true, selectedColor: 'tomato' }
+                        [selectedDate]: { selected: true, selectedColor: Colour.primary }
                     }}
                     markingType={'single'}
                     style={styles.calendar}
@@ -131,13 +132,13 @@ const styles = StyleSheet.create({
     },
     headerIcon: {
         fontSize: 35,
-        color: "tomato",
+        color:Colour.primary,
         marginRight: 10,
     },
     headerText: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: "tomato",
+        color: Colour.primary,
     },
     contentContainer: {
         flex: 1,
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     button: {
-        backgroundColor: 'tomato',
+        backgroundColor: Colour.primary,
         paddingVertical: 15,
         borderRadius: 10,
         alignItems: 'center',

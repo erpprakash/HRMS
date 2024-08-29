@@ -13,6 +13,7 @@ import customFetch from './utils/CustomFetch';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import Colour from '../Constants/Colour';
 
 export default function LeaveApply() {
     const [startDate, setStartDate] = useState(new Date());
@@ -165,17 +166,17 @@ const styles = StyleSheet.create({
     },
     backIcon: {
         fontSize: 24,
-        color: "tomato",
+        color: Colour.primary,
     },
     headerIcon: {
         fontSize: 35,
-        color: "tomato",
+        color: Colour.primary,
         marginRight: 10,
     },
     headerText: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: "tomato",
+        color: Colour.primary,
     },
     formContainer: {
         flex: 1,
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     button: {
-        backgroundColor: 'tomato',
+        backgroundColor:Colour.primary,
         paddingVertical: 15,
         borderRadius: 10,
         alignItems: 'center',
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     pickerWrapper: {
-        borderColor: 'tomato',
+        borderColor:Colour.primary,
         borderWidth: 1,
         borderRadius: 10,
         overflow: 'hidden',

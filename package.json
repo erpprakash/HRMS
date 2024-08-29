@@ -1,11 +1,10 @@
 {
   "name": "hrm",
   "version": "1.0.0",
-  "main": "expo/AppEntry.js",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
@@ -17,11 +16,14 @@
     "@react-navigation/drawer": "^6.7.2",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.10.1",
+    "@types/react": "~18.2.79",
     "axios": "^1.7.2",
     "base-64": "^1.0.0",
     "dayjs": "^1.11.12",
     "expo": "~51.0.18",
+    "expo-camera": "~15.0.15",
     "expo-dev-client": "~4.0.22",
+    "expo-face-detector": "~12.7.1",
     "expo-image-picker": "~15.0.7",
     "expo-linear-gradient": "~13.0.2",
     "expo-location": "~17.0.1",
@@ -31,19 +33,24 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.74.5",
+    "react-native-background-fetch": "^4.2.5",
     "react-native-calendars": "^1.1306.0",
+    "react-native-gesture-handler": "^2.18.1",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-modal-datetime-picker": "^17.1.0",
     "react-native-paper": "^5.12.5",
     "react-native-picker-select": "^9.2.0",
+    "react-native-reanimated": "^3.15.0",
     "react-native-safe-area-context": "4.10.5",
     "react-native-screens": "3.31.1",
+    "react-native-vision-camera": "^4.5.2",
     "react-native-web": "~0.19.10",
     "typescript": "~5.3.3",
-    "@types/react": "~18.2.79"
+    "vision-camera-face-detector": "^0.1.8"
   },
   "devDependencies": {
-    "@babel/core": "^7.24.0"
+    "@babel/core": "^7.24.0",
+    "@types/react-native": "^0.73.0"
   },
   "private": true
 }

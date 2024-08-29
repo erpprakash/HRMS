@@ -10,7 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import customFetch from './utils/CustomFetch';
-
+import Colour from '../Constants/Colour'
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
     const navigation = useNavigation();
@@ -85,17 +85,17 @@ const styles = StyleSheet.create({
     },
     backIcon: {
         fontSize: 24,
-        color: "tomato",
+        color: Colour.primary,
     },
     headerIcon: {
         fontSize: 35,
-        color: "tomato",
+        color: Colour.primary,
         marginLeft: 50,
     },
     headerText: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: "tomato",
+        color:Colour.primary,
         marginLeft: 10,
     },
     formContainer: {
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     button: {
-        backgroundColor: 'tomato',
+        backgroundColor: Colour.primary,
         paddingVertical: 15,
         borderRadius: 10,
         alignItems: 'center',
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     backToLoginText: {
-        color: 'tomato',
+        color: Colour.primary,
         fontSize: 16,
     },
 });
