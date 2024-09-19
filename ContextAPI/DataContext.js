@@ -9,6 +9,7 @@ const DataContext = createContext();
 const DataProvider = ({ children }) => {
   const [userToken, setUserToken] = useState(null);
   const [userDetail, setUserDetail] = useState(null);
+  const [Theme, setTheme] = useState("#FF5733");
   const navigation = useNavigation();
 
   function parseJwt(token) {
@@ -30,6 +31,15 @@ const DataProvider = ({ children }) => {
       return null;
     }
   }
+
+  const handleTheme = async (storedColor) => {
+    try {
+      setTheme(storedColor);
+      // await AsyncStorage.setItem('color', color); // Save color in AsyncStorage
+    } catch (error) {
+      console.error('Error during setting color:', error);
+    }
+  };
 
   const handleLogin = async (token) => {
     try {
@@ -89,13 +99,20 @@ const DataProvider = ({ children }) => {
   const initializeApp = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
+      const storedColor = await AsyncStorage.getItem('theme');
+
       if (token) {
         await handleLogin(token);
       } else {
         setUserDetail(null);
       }
+      if (storedColor) {
+        handleTheme(storedColor);
+      } else {
+        setTheme("#FF5733");
+      }
     } catch (error) {
-      console.error('Error retrieving token:', error);
+      console.error('Error retrieving token/color:', error);
     }
   };
 
@@ -104,7 +121,7 @@ const DataProvider = ({ children }) => {
   }, []);
 
   return (
-    <DataContext.Provider value={{ userDetail, handleLogin, handleLogout }}>
+    <DataContext.Provider value={{ userDetail, handleLogin, handleLogout, handleTheme, Theme }}>
       {children}
     </DataContext.Provider>
   );

@@ -12,6 +12,10 @@ import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Colour from '../Constants/Colour'
+
+
+import firebase from '@react-native-firebase/app';
+
 export default function OnDuty() {
     const [date, setDate] = useState(new Date());
     const [reason, setReason] = useState('');
@@ -23,6 +27,7 @@ export default function OnDuty() {
     const [timer, setTimer] = useState(0);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const navigation = useNavigation();
+    
 
     useEffect(() => {
         retrieveStoredData();
@@ -76,6 +81,31 @@ export default function OnDuty() {
             console.error('Failed to clear data:', error);
         }
     };
+    const handleSelectImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: false,
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImageUri(result.uri);
+            processImage(result.uri);
+        }
+    };
+
+    const processImage = async (uri) => {
+        try {
+            const image = await fetch(uri);
+            const imageData = await image.blob();
+
+            const faces = await ml().faceDetectorProcessImage(imageData);
+            Alert.alert(`Detected ${faces.length} faces`);
+        } catch (error) {
+            console.error('Face detection error:', error);
+        }
+    };
+
 
     const handleOnDutySubmit = async () => {
         try {
@@ -127,33 +157,54 @@ export default function OnDuty() {
     const handleSelfieCapture = async () => {
         const permissionsGranted = await requestPermissions();
         if (!permissionsGranted) return;
-
-        const locationResult = await Location.getCurrentPositionAsync({});
-        const { coords } = locationResult;
-        const { latitude, longitude } = coords;
-
-        const reverseGeocode = await Location.reverseGeocodeAsync({ latitude, longitude });
-        const city = reverseGeocode[0]?.formattedAddress || 'Default City';
-        setCity(city);
-        setLocation(locationResult);
-
-        const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: false,
-            quality: 1,
-            cameraType: ImagePicker.CameraType.front,
-        });
-
-        if (!result.canceled && result.assets && result.assets[0]) {
-            setImageUri(result.assets[0].uri);
+    
+        try {
+            const locationResult = await Location.getCurrentPositionAsync({});
+            const { coords } = locationResult;
+            const { latitude, longitude } = coords;
+    
+            const reverseGeocode = await Location.reverseGeocodeAsync({ latitude, longitude });
+            const city = reverseGeocode[0]?.formattedAddress || 'Default City';
+            setCity(city);
+            setLocation(locationResult);
+    
+            const result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: false,
+                quality: 1,
+                cameraType: ImagePicker.CameraType.front,
+            });
+    
+            if (!result.canceled && result.assets && result.assets[0]) {
+                setImageUri(result.assets[0].uri);
+                await detectFace(result.assets[0].uri); // Call face detection here
+            }
+        } catch (error) {
+            console.error('Selfie capture error:', error);
+            Alert.alert('Error', 'An error occurred while capturing your selfie.');
         }
     };
-
+    
+    // Inside your handleSelfieCapture function
+    const detectFace = async (uri) => {
+        try {
+            const faces = await mlVision().faceDetectorProcessImage(uri);
+            if (faces.length > 0) {
+                Alert.alert('Face Detected', 'Your face is properly oriented.');
+            } else {
+                Alert.alert('No Face Detected', 'Please ensure your face is visible and properly oriented.');
+            }
+        } catch (error) {
+            console.error('Face detection error:', error);
+            Alert.alert('Error', 'An error occurred while detecting face.');
+        }
+    };
+    
     const requestPermissions = async () => {
         try {
             const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
             const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
-
+    
             if (cameraStatus !== 'granted' || locationStatus !== 'granted') {
                 Alert.alert('Permission required', 'Camera and location permissions are required.');
                 return false;
@@ -164,6 +215,7 @@ export default function OnDuty() {
             return false;
         }
     };
+    
 
     const resetState = () => {
         setTimer(0);

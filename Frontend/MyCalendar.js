@@ -26,11 +26,8 @@ export default function MyCalendar() {
         try {
             const response = await customFetch.get(`/punch-details?date=${day.dateString}`);
             const { inPunchTime, outPunchTime } = response.data;
-
-            setInPunch(inPunchTime || ''); // Set real in punch time
-            setOutPunch(outPunchTime || ''); // Set real out punch time
-
-            // Calculate balance late minutes
+            setInPunch(inPunchTime || ''); 
+            setOutPunch(outPunchTime || ''); 
             const lateMinutes = calculateLateMinutes(inPunchTime, outPunchTime);
             setBalanceLateMinutes(lateMinutes);
         } catch (error) {
@@ -40,8 +37,7 @@ export default function MyCalendar() {
     };
 
     const calculateLateMinutes = (inPunchTime, outPunchTime) => {
-        // Assuming the expected in punch time is '09:00'
-        const expectedInPunch = '09:00';
+           const expectedInPunch = '09:00';
         const [expectedHour, expectedMinute] = expectedInPunch.split(':').map(Number);
         const [inPunchHour, inPunchMinute] = (inPunchTime || '00:00').split(':').map(Number);
 
@@ -58,11 +54,8 @@ export default function MyCalendar() {
             Alert.alert('Error', 'Please complete all fields.');
             return;
         }
-
-        // Submit the report
         Alert.alert('Success', 'Report submitted successfully.');
-        // You can also add functionality to send the report data to a server here
-    };
+           };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -128,7 +121,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f8f8f8',
         borderBottomWidth: 1,
         borderBottomColor: '#ddd',
-        zIndex: 1, // Ensure header is on top
+        zIndex: 1, 
     },
     headerIcon: {
         fontSize: 35,

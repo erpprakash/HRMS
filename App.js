@@ -7,23 +7,36 @@ import MissPunch from './Frontend/MissPunch';
 import LeaveApply from './Frontend/LeaveApply';
 import MyCalendar from './Frontend/MyCalendar';
 import OnDuty from './Frontend/OnDuty';
+import Settings from './Frontend/Profile';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
-import { DataProvider } from './ContextAPI/DataContext';
-import { AppProvider } from './ContextAPI/AppContext';
+
+
+
 import Colour from './Constants/Colour';
+import { useState } from 'react';
+import { AppProvider } from './ContextAPI/AppContext';
+import { DataProvider } from './ContextAPI/DataContext';
+
+
+
 
 export default function App() {
   const Stack = createNativeStackNavigator();
+  
+  const [primaryColor, setPrimaryColor] = useState(null);
+
+  // setPrimaryColor(Theme)
+ 
+ 
 
   return (
     <View style={{ flex: 1 }}>
-      <StatusBar
+      {/* <StatusBar
         barStyle="dark-content"
-        backgroundColor={Colour.primary}
+        backgroundColor={Colour.primaryColor}
         translucent={false}
-      />
+      /> */}
       <NavigationContainer>
         <AppProvider>
           <DataProvider>
@@ -66,6 +79,11 @@ export default function App() {
               <Stack.Screen
                 name="MyCalendar"
                 component={MyCalendar}
+                options={{ headerShown: false }}
+              />
+               <Stack.Screen
+                name="Settings"
+                component={Settings}
                 options={{ headerShown: false }}
               />
             </Stack.Navigator>

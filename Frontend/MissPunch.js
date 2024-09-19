@@ -12,16 +12,16 @@ import dayjs from 'dayjs';
 import customFetch from './utils/CustomFetch';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
 import Colour from '../Constants/Colour';
 
-export default function Permission() {
+export default function MissPunch() {
     const [date, setDate] = useState(new Date());
-    const [startTime, setStartTime] = useState(new Date());
-    const [endTime, setEndTime] = useState(new Date());
+    const [punchTime, setPunchTime] = useState(new Date());
     const [reason, setReason] = useState('');
+    const [punchType, setPunchType] = useState('in'); // Default to 'in' punch
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-    const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
     const navigation = useNavigation();
 
     const handleDateChange = (event, selectedDate) => {
@@ -30,38 +30,26 @@ export default function Permission() {
         setDate(currentDate);
     };
 
-    const handleStartTimeChange = (event, selectedTime) => {
-        const currentTime = selectedTime || startTime;
-        setShowStartTimePicker(Platform.OS === 'ios');
-        setStartTime(currentTime);
+    const handleTimeChange = (event, selectedTime) => {
+        const currentTime = selectedTime || punchTime;
+        setShowTimePicker(Platform.OS === 'ios');
+        setPunchTime(currentTime);
     };
 
-    const handleEndTimeChange = (event, selectedTime) => {
-        const currentTime = selectedTime || endTime;
-        setShowEndTimePicker(Platform.OS === 'ios');
-        setEndTime(currentTime);
-    };
-
-    const handlePermissionRequest = async () => {
-        if (endTime <= startTime) {
-            Alert.alert('Validation Error', 'End time must be later than start time.');
-            return;
-        }
-        
+    const handleMissPunchRequest = async () => {
         try {
             const formattedDate = dayjs(date).format('YYYY-MM-DD');
-            const formattedStartTime = dayjs(startTime).format('HH:mm');
-            const formattedEndTime = dayjs(endTime).format('HH:mm');
-            const response = await customFetch.post('/permission-request', {
+            const formattedPunchTime = dayjs(punchTime).format('HH:mm');
+            const response = await customFetch.post('/miss-punch-request', {
                 date: formattedDate,
-                startTime: formattedStartTime,
-                endTime: formattedEndTime,
+                punchTime: formattedPunchTime,
+                punchType, // Include the punch type
                 reason
             });
-            Alert.alert('Success', 'Permission request submitted successfully.');
+            Alert.alert('Success', 'Miss Punch request submitted successfully.');
             navigation.goBack();
         } catch (error) {
-            console.error('Permission request failed:', error);
+            console.error('Miss Punch request failed:', error);
             Alert.alert('Failed', error?.response?.data?.error || 'An error occurred. Please try again.');
         }
     };
@@ -77,8 +65,8 @@ export default function Permission() {
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                         <Icon name="arrow-back" style={styles.backIcon} />
                     </TouchableOpacity>
-                    <Icon name="time-outline" style={styles.headerIcon} />
-                    <Text style={styles.headerText}>Permission Request</Text>
+                    <Icon name="calendar-outline" style={styles.headerIcon} />
+                    <Text style={styles.headerText}>Miss Punch Request</Text>
                 </View>
                 <View style={styles.inputContainer}>
                     <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateInput}>
@@ -95,43 +83,40 @@ export default function Permission() {
                             />
                         </View>
                     )}
-                    <Text style={styles.label}>From Time:</Text>
-                    <TouchableOpacity onPress={() => setShowStartTimePicker(true)} style={styles.dateInput}>
-                        <Text style={styles.dateText}>{dayjs(startTime).format('HH:mm')}</Text>
+                    <Text style={styles.label}>Punch Time:</Text>
+                    <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.dateInput}>
+                        <Text style={styles.dateText}>{dayjs(punchTime).format('HH:mm')}</Text>
                     </TouchableOpacity>
-                    {showStartTimePicker && (
+                    {showTimePicker && (
                         <View style={styles.pickerWrapper}>
                             <DateTimePicker
-                                value={startTime}
+                                value={punchTime}
                                 mode="time"
                                 display="default"
-                                onChange={handleStartTimeChange}
+                                onChange={handleTimeChange}
                             />
                         </View>
                     )}
-                    <Text style={styles.label}>To Time:</Text>
-                    <TouchableOpacity onPress={() => setShowEndTimePicker(true)} style={styles.dateInput}>
-                        <Text style={styles.dateText}>{dayjs(endTime).format('HH:mm')}</Text>
-                    </TouchableOpacity>
-                    {showEndTimePicker && (
-                        <View style={styles.pickerWrapper}>
-                            <DateTimePicker
-                                value={endTime}
-                                mode="time"
-                                display="default"
-                                onChange={handleEndTimeChange}
-                            />
-                        </View>
-                    )}
+                    <Text style={styles.label}>Punch Type:</Text>
+                    <View style={styles.pickerWrapper}>
+                        <Picker
+                            selectedValue={punchType}
+                            onValueChange={(itemValue) => setPunchType(itemValue)}
+                            style={styles.picker}
+                        >
+                            <Picker.Item label="In Punch" value="in" />
+                            <Picker.Item label="Out Punch" value="out" />
+                        </Picker>
+                    </View>
                     <TextInput
                         onChangeText={setReason}
                         style={styles.textInput}
                         value={reason}
-                        placeholder="Enter reason for permission request"
+                        placeholder="Enter reason for miss punch request"
                         placeholderTextColor="#999"
                     />
                 </View>
-                <TouchableOpacity onPress={handlePermissionRequest} style={styles.button}>
+                <TouchableOpacity onPress={handleMissPunchRequest} style={styles.button}>
                     <Text style={styles.buttonText}>Submit</Text>
                 </TouchableOpacity>
             </KeyboardAvoidingView>
@@ -159,7 +144,7 @@ const styles = StyleSheet.create({
     },
     headerIcon: {
         fontSize: 35,
-        color:Colour.primary,
+        color: Colour.primary,
         marginRight: 10,
     },
     headerText: {
@@ -195,6 +180,17 @@ const styles = StyleSheet.create({
         color: "#333",
         fontSize: 18,
     },
+    pickerWrapper: {
+        borderColor: "#ddd",
+        borderWidth: 1,
+        borderRadius: 10,
+        overflow: 'hidden',
+        marginBottom: 15,
+    },
+    picker: {
+        height: 55,
+        color: "#333",
+    },
     textInput: {
         height: 55,
         borderColor: '#ddd',
@@ -227,13 +223,6 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 20,
         fontWeight: 'bold',
-    },
-    pickerWrapper: {
-        borderColor: Colour.primary,
-        borderWidth: 1,
-        borderRadius: 10,
-        overflow: 'hidden',
-        marginBottom: 15,
     },
     label: {
         fontSize: 16,

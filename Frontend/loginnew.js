@@ -13,7 +13,7 @@ import Colour from '../Constants/Colour'
 
 export default function LoginNew() {
     const [formData, setFormData] = useState({ email: '', password: '' });
-    const { handleLogin } = useContext(DataContext);
+    const { handleLogin,Theme } = useContext(DataContext);
     const navigation = useNavigation();
     const { sharedState, setSharedState } = useContext(AppContext);
     const [modalVisible, setModalVisible] = useState(false);
@@ -23,19 +23,20 @@ export default function LoginNew() {
     };
 
     const handleSubmit = async () => {
-        const userData = { email: formData.email, password: formData.password };
+        navigation.navigate('Home');
+        // const userData = { email: formData.email, password: formData.password };
 
-        try {
-            const response = await customFetch.post('/login', userData);
-            const token = response.data;
-            await AsyncStorage.setItem('token', token);
-            handleLogin(token);
-            navigation.navigate('Home');
-            setSharedState(token);
-        } catch (error) {
-            console.error('Login failed:', error);
-            Alert.alert('Login Failed', error?.response?.data?.error || 'An error occurred. Please try again.');
-        }
+        // try {
+        //     const response = await customFetch.post('/login', userData);
+        //     const token = response.data;
+        //     await AsyncStorage.setItem('token', token);
+        //     handleLogin(token);
+        //     navigation.navigate('Home');
+        //     setSharedState(token);
+        // } catch (error) {
+        //     console.error('Login failed:', error);
+        //     Alert.alert('Login Failed', error?.response?.data?.error || 'An error occurred. Please try again.');
+        // }
     };
 
 
@@ -60,7 +61,113 @@ export default function LoginNew() {
         inputRange: [0, 1],
         outputRange: [130, 20],
     });
-
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: '#FFFFFF',
+            // backgroundColor: '#f5f5f5',
+        },
+        backgroundImage: {
+            flex: 1,
+            resizeMode: 'cover',
+            justifyContent: 'center',
+        },
+        container1: {
+            flex: 5,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        container2: {
+            flex: 3,
+            justifyContent: 'flex-start',
+            alignItems: 'flex-start',
+            paddingHorizontal: 20,
+            paddingVertical: 20,
+        },
+        container3: {
+            flex: 3,
+            justifyContent: 'flex-end',
+        },
+        container4: {
+            flexDirection: "row-reverse",
+            alignItems: "flex-end",
+            paddingHorizontal: 30,
+            paddingVertical: 10,
+            marginVertical: 20,
+        },
+        container5: {
+            flex: 3,
+            justifyContent: 'flex-start',
+            alignItems: 'flex-start',
+            paddingHorizontal: 20,
+            marginVertical: 10,
+        },
+        image1: {
+            width: '90%',
+            height: '60%',
+            resizeMode: 'contain',
+            position: 'absolute',
+            top: "40%",
+            left: "1%",
+        },
+        image2: {
+            width: "60%",
+            height: "50%",
+            resizeMode: 'contain',
+            position: 'absolute',
+            top: "50%",
+            right: "18%",
+        },
+        image3: {
+            width: "4%",
+            height: "6%",
+            resizeMode: 'contain',
+            position: 'absolute',
+            bottom: "18%",
+            right: "48%",
+        },
+        image4: {
+            width: '105%',
+            height: '140%',
+            borderRadius: 10,
+        },
+        loginText: {
+            fontSize: 32,
+            fontWeight: 'bold',
+            marginBottom: "10%",
+            color: "#333",
+        },
+        text: {
+            fontSize: 14,
+            paddingVertical: "4%",
+            color: Theme,
+        },
+        textInput: {
+            color: "#333",
+            width: '100%',
+            height: "30%",
+            borderColor: '#ccc',
+            borderWidth: 1,
+            borderRadius: 10,
+            paddingHorizontal: 15,
+            marginBottom: 15,
+            backgroundColor: '#fff',
+        },
+        button: {
+            width: '100%',
+            backgroundColor:Theme,
+            paddingVertical: 15,
+            borderRadius: 10,
+            marginTop: "1%",
+        },
+        buttonText: {
+            color: '#FFFFFF',
+            fontSize: 26,
+            textAlign: 'center',
+            fontWeight: 'bold',
+        },
+    });
+    
     return (
         <KeyboardAvoidingView
             style={styles.container}
@@ -119,10 +226,13 @@ export default function LoginNew() {
                         </View>
                         <View style={styles.container5}>
 
-                            {/* <TouchableOpacity onPress={navigation.navigate('Home')} style={styles.button}> */}
-                                <TouchableOpacity onPress={handleSubmit} style={styles.button}>
+                            {/* <TouchableOpacity onPress={navigation.navigate('Home')} style={styles.button}>
+                            </TouchableOpacity> 
+                             */}
+                            <TouchableOpacity onPress={handleSubmit} style={styles.button}>
                                 <Text style={styles.buttonText}>Login</Text>
                             </TouchableOpacity>
+                            
                         </View>
                         <View style={styles.container3}>
                             <Image style={styles.image4} source={require("./Images/Tomato.png")} />
@@ -134,109 +244,3 @@ export default function LoginNew() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#FFFFFF',
-        // backgroundColor: '#f5f5f5',
-    },
-    backgroundImage: {
-        flex: 1,
-        resizeMode: 'cover',
-        justifyContent: 'center',
-    },
-    container1: {
-        flex: 5,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    container2: {
-        flex: 3,
-        justifyContent: 'flex-start',
-        alignItems: 'flex-start',
-        paddingHorizontal: 20,
-        paddingVertical: 20,
-    },
-    container3: {
-        flex: 3,
-        justifyContent: 'flex-end',
-    },
-    container4: {
-        flexDirection: "row-reverse",
-        alignItems: "flex-end",
-        paddingHorizontal: 30,
-        paddingVertical: 10,
-        marginVertical: 20,
-    },
-    container5: {
-        flex: 3,
-        justifyContent: 'flex-start',
-        alignItems: 'flex-start',
-        paddingHorizontal: 20,
-        marginVertical: 10,
-    },
-    image1: {
-        width: '90%',
-        height: '60%',
-        resizeMode: 'contain',
-        position: 'absolute',
-        top: "40%",
-        left: "1%",
-    },
-    image2: {
-        width: "60%",
-        height: "50%",
-        resizeMode: 'contain',
-        position: 'absolute',
-        top: "50%",
-        right: "18%",
-    },
-    image3: {
-        width: "4%",
-        height: "6%",
-        resizeMode: 'contain',
-        position: 'absolute',
-        bottom: "18%",
-        right: "48%",
-    },
-    image4: {
-        width: '105%',
-        height: '140%',
-        borderRadius: 10,
-    },
-    loginText: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        marginBottom: "10%",
-        color: "#333",
-    },
-    text: {
-        fontSize: 14,
-        paddingVertical: "4%",
-        color: Colour.primary,
-    },
-    textInput: {
-        color: "#333",
-        width: '100%',
-        height: "30%",
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        marginBottom: 15,
-        backgroundColor: '#fff',
-    },
-    button: {
-        width: '100%',
-        backgroundColor: Colour.primary,
-        paddingVertical: 15,
-        borderRadius: 10,
-        marginTop: "1%",
-    },
-    buttonText: {
-        color: '#FFFFFF',
-        fontSize: 26,
-        textAlign: 'center',
-        fontWeight: 'bold',
-    },
-});
